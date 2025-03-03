@@ -1,0 +1,13 @@
+version: '3'
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: ["npm", "run", "start"]  # Ensure it runs the production server, not "dev"
