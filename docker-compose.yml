@@ -1,13 +1,12 @@
-version: '3'
+version: '3.8'
 services:
-  server:
-    build:
-      context: .
+  app:
+    build: .
     ports:
-      - "3000:3000"
-    env_file:
-      - .env
+      - "5000:5000"
     volumes:
       - .:/app
       - /app/node_modules
-    command: ["npm", "run", "start"]  # Ensure it runs the production server, not "dev"
+    environment:
+      - NODE_ENV=development
+    command: ["yarn", "run", "dev", "--host"]

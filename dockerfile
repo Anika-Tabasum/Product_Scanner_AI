@@ -1,21 +1,23 @@
-# Stage 1: Build Client
-FROM node:18-alpine AS client
+# Use a Node.js base image
+FROM node:18-alpine
 
-WORKDIR /app/client
-COPY client/package*.json ./
-RUN npm install
-COPY client/ .
-RUN npm run build
+# Set the working directory
+WORKDIR /app
 
-# Stage 2: Build Server
-FROM node:18-alpine  # <- Removed "AS server" to make this the final image
+# Copy package.json and yarn.lock first to install dependencies
+COPY package.json yarn.lock ./
 
-WORKDIR /app/server
-COPY server/package*.json ./
-RUN npm install
-COPY server/ .
-COPY --from=client /app/client/dist ./public  # Copy built frontend
+# Install dependencies
+RUN yarn install
 
-EXPOSE 3000
+# Copy the rest of the application files
+COPY . .
 
-CMD ["npm", "run", "start"]  # Ensure it runs production mode
+# Run database migration
+RUN npm run db:push
+
+# Expose the port Vite runs on
+EXPOSE 5000
+
+# Start the Vite development server
+CMD ["yarn", "run", "dev", "--host"]
