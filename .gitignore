@@ -3,5 +3,9 @@ dist
 .DS_Store
 server/public
 vite.config.ts.*
+<<<<<<< HEAD
 *.tar.gz
 .env
+=======
+*.tar.gz
+>>>>>>> e6c0e49 (admin fix)

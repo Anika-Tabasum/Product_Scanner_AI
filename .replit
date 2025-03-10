@@ -15,7 +15,10 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
+<<<<<<< HEAD
 runButton = "Project"
+=======
+>>>>>>> e6c0e49 (admin fix)
 
 [[workflows.workflow]]
 name = "Project"

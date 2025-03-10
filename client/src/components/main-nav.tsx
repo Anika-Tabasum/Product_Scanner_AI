@@ -5,9 +5,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+<<<<<<< HEAD
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
+=======
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, User } from "lucide-react";
+import { BarChart3 } from "lucide-react"; // Added import for BarChart3 icon
+
+>>>>>>> e6c0e49 (admin fix)
 
 export function MainNav() {
   const { user, logoutMutation } = useAuth();
@@ -22,7 +31,11 @@ export function MainNav() {
         <Link href="/" className="font-semibold text-lg">
           AI Product Scanner
         </Link>
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> e6c0e49 (admin fix)
         <nav className="flex items-center ml-6 space-x-4 lg:space-x-6">
           <Button asChild variant="ghost">
             <Link href="/" className="text-sm font-medium">
@@ -48,6 +61,20 @@ export function MainNav() {
                 <DropdownMenuItem className="text-sm">
                   Signed in as <span className="font-medium ml-1">{user.username}</span>
                 </DropdownMenuItem>
+<<<<<<< HEAD
+=======
+                <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                {user.role === 'admin' && (
+                  <DropdownMenuItem onClick={() => window.location.href = '/admin'}> {/* Changed route to /admin */}
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    <span>Admin Dashboard</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator /> {/* Added separator for better visual separation */}
+>>>>>>> e6c0e49 (admin fix)
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
@@ -59,4 +86,8 @@ export function MainNav() {
       </div>
     </header>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e6c0e49 (admin fix)
