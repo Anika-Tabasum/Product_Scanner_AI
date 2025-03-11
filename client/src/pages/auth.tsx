@@ -14,11 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-<<<<<<< HEAD
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-=======
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
->>>>>>> e6c0e49 (admin fix)
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { SiGithub } from 'react-icons/si';
@@ -47,10 +43,7 @@ export default function AuthPage() {
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: '',
-<<<<<<< HEAD
-=======
       email: '',
->>>>>>> e6c0e49 (admin fix)
       password: '',
     },
   });
@@ -121,8 +114,6 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-<<<<<<< HEAD
-=======
                     <div className="text-right">
                       <a 
                         href="/password-reset" 
@@ -131,7 +122,6 @@ export default function AuthPage() {
                         Forgot password?
                       </a>
                     </div>
->>>>>>> e6c0e49 (admin fix)
                     <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
                       {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
                     </Button>
@@ -157,8 +147,6 @@ export default function AuthPage() {
                     />
                     <FormField
                       control={registerForm.control}
-<<<<<<< HEAD
-=======
                       name="email"
                       render={({ field }) => (
                         <FormItem>
@@ -172,7 +160,6 @@ export default function AuthPage() {
                     />
                     <FormField
                       control={registerForm.control}
->>>>>>> e6c0e49 (admin fix)
                       name="password"
                       render={({ field }) => (
                         <FormItem>

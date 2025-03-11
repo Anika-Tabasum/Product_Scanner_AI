@@ -8,12 +8,10 @@ import { MainNav } from "@/components/main-nav";
 import Home from "@/pages/home";
 import PluginDemo from "@/pages/plugin-demo";
 import AuthPage from "@/pages/auth";
-<<<<<<< HEAD
-=======
 import ProfilePage from "@/pages/profile";
 import AdminDashboard from "@/pages/admin";
 import PasswordResetPage from "@/pages/password-reset";
->>>>>>> e6c0e49 (admin fix)
+import GGSVisualization from "@/pages/ggs-visualization";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -24,14 +22,11 @@ function Router() {
         <Switch>
           <ProtectedRoute path="/" component={Home} />
           <ProtectedRoute path="/plugin-demo" component={PluginDemo} />
-<<<<<<< HEAD
-          <Route path="/auth" component={AuthPage} />
-=======
           <ProtectedRoute path="/profile" component={ProfilePage} />
           <ProtectedRoute path="/admin" component={AdminDashboard} />
+          <ProtectedRoute path="/ggs-visualization" component={GGSVisualization} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/password-reset" component={PasswordResetPage} />
->>>>>>> e6c0e49 (admin fix)
           <Route component={NotFound} />
         </Switch>
       </main>

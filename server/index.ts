@@ -12,14 +12,11 @@ app.use((req, res, next) => {
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
-<<<<<<< HEAD
-=======
   // Log authenticated user
   if (req.isAuthenticated && req.isAuthenticated() && req.user) {
     console.log(`Request by authenticated user: ${req.user.username} (ID: ${req.user.id})`);
   }
 
->>>>>>> e6c0e49 (admin fix)
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
@@ -45,16 +42,12 @@ app.use((req, res, next) => {
   next();
 });
 
-<<<<<<< HEAD
-(async () => {
-=======
 import { initEmailTransport } from "./lib/email";
 
 (async () => {
   // Initialize email transport
   await initEmailTransport();
   
->>>>>>> e6c0e49 (admin fix)
   // Setup authentication before registering routes
   setupAuth(app);
 

@@ -8,10 +8,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
-<<<<<<< HEAD
-=======
 import { generateVerificationToken, sendVerificationEmail } from "./lib/email";
->>>>>>> e6c0e49 (admin fix)
 
 declare global {
   namespace Express {
@@ -21,21 +18,13 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
-<<<<<<< HEAD
-async function hashPassword(password: string) {
-=======
 export async function hashPassword(password: string) {
->>>>>>> e6c0e49 (admin fix)
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
-<<<<<<< HEAD
-async function comparePasswords(supplied: string, stored: string) {
-=======
 export async function comparePasswords(supplied: string, stored: string) {
->>>>>>> e6c0e49 (admin fix)
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -115,31 +104,14 @@ export function setupAuth(app: Express) {
     }
   });
 
-<<<<<<< HEAD
-  // Modify the registration endpoint to not automatically log in
-  app.post("/api/register", async (req, res, next) => {
-    try {
-=======
   // Modify the registration endpoint to include email verification
   app.post("/api/register", async (req, res, next) => {
     try {
       // Check if username or email already exists
->>>>>>> e6c0e49 (admin fix)
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
-<<<<<<< HEAD
-
-      const hashedPassword = await hashPassword(req.body.password);
-      const user = await storage.createUser({
-        username: req.body.username,
-        password: hashedPassword,
-      });
-
-      // Return success without logging in
-      res.status(201).json({ message: "Registration successful" });
-=======
       
       const existingEmail = await storage.getUserByEmail(req.body.email);
       if (existingEmail) {
@@ -174,13 +146,10 @@ export function setupAuth(app: Express) {
       res.status(201).json({ 
         message: "Registration successful! Please check your email to verify your account." 
       });
->>>>>>> e6c0e49 (admin fix)
     } catch (error) {
       next(error);
     }
   });
-<<<<<<< HEAD
-=======
   
   // Add email verification endpoint
   app.get("/api/verify-email", async (req, res) => {
@@ -208,7 +177,6 @@ export function setupAuth(app: Express) {
       res.status(500).json({ message: "Error during email verification" });
     }
   });
->>>>>>> e6c0e49 (admin fix)
 
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err: Error | null, user: Express.User | false) => {
@@ -218,27 +186,19 @@ export function setupAuth(app: Express) {
       }
       req.login(user, (err) => {
         if (err) return next(err);
-<<<<<<< HEAD
-=======
         console.log(`User logged in: ${user.username} (ID: ${user.id})`);
->>>>>>> e6c0e49 (admin fix)
         res.json(user);
       });
     })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
-<<<<<<< HEAD
-    req.logout((err) => {
-      if (err) return next(err);
-=======
     const user = req.user;
     req.logout((err) => {
       if (err) return next(err);
       if (user) {
         console.log(`User logged out: ${user.username} (ID: ${user.id})`);
       }
->>>>>>> e6c0e49 (admin fix)
       res.sendStatus(200);
     });
   });

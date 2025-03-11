@@ -1,10 +1,6 @@
-import { products, users, type Product, type InsertProduct, type User, type InsertUser } from "@shared/schema";
+import { products, users, ggsData, type Product, type InsertProduct, type User, type InsertUser, type GGSData, type InsertGGSData } from "@shared/schema";
 import { db } from "./db";
-<<<<<<< HEAD
-import { eq, sql } from "drizzle-orm";
-=======
 import { eq, sql, count, desc } from "drizzle-orm";
->>>>>>> e6c0e49 (admin fix)
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -21,15 +17,9 @@ export interface IStorage {
   // Auth related methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-<<<<<<< HEAD
-  createUser(user: InsertUser): Promise<User>;
-
-  // Session store
-  sessionStore: session.Store;
-=======
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByVerificationToken(token: string): Promise<User | undefined>;
-  createUser(user: Partial<User>): Promise<User>;
+  createUser(user: InsertUser): Promise<User>;
   verifyUser(userId: number): Promise<void>;
   updateUserProfile(userId: number, data: Partial<User>): Promise<User>;
   changePassword(userId: number, password: string): Promise<void>;
@@ -55,7 +45,11 @@ export interface IStorage {
   getRecentUsers(limit: number): Promise<User[]>;
   updateUserRole(userId: number, role: string): Promise<User>;
   deleteProduct(productId: number): Promise<void>;
->>>>>>> e6c0e49 (admin fix)
+
+  // GGS Data methods
+  createGGSData(data: InsertGGSData): Promise<GGSData>;
+  getGGSDataByGender(): Promise<{ male: number; female: number }>;
+  getGGSEventsByGender(): Promise<{ male: GGSData[]; female: GGSData[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -76,9 +70,6 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
-<<<<<<< HEAD
-  async getProducts(): Promise<Product[]> {
-=======
   async getProducts(userId?: number): Promise<Product[]> {
     if (userId) {
       return await db
@@ -86,7 +77,6 @@ export class DatabaseStorage implements IStorage {
         .from(products)
         .where(eq(products.userId, userId));
     }
->>>>>>> e6c0e49 (admin fix)
     return await db.select().from(products);
   }
 
@@ -133,15 +123,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-<<<<<<< HEAD
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
-  }
-=======
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db
       .select()
@@ -158,10 +139,15 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(userData: Partial<User>): Promise<User> {
+  async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values({
+        ...userData,
+        isVerified: "false",
+        role: "user",
+        deleted: false
+      })
       .returning();
     return user;
   }
@@ -170,7 +156,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(users)
       .set({ 
-        isVerified: true, 
+        isVerified: "true", 
         verificationToken: null 
       })
       .where(eq(users.id, userId));
@@ -303,7 +289,43 @@ export class DatabaseStorage implements IStorage {
   async deleteProduct(productId: number): Promise<void> {
     await db.delete(products).where(eq(products.id, productId));
   }
->>>>>>> e6c0e49 (admin fix)
+
+  async createGGSData(data: InsertGGSData): Promise<GGSData> {
+    const [ggsEntry] = await db
+      .insert(ggsData)
+      .values(data)
+      .returning();
+    return ggsEntry;
+  }
+
+  async getGGSDataByGender(): Promise<{ male: number; female: number }> {
+    const result = await db
+      .select({
+        sex: ggsData.sex,
+        count: count()
+      })
+      .from(ggsData)
+      .groupBy(ggsData.sex);
+
+    const counts = { male: 0, female: 0 };
+    result.forEach(({ sex, count }) => {
+      if (sex === 1) counts.male = count;
+      if (sex === 2) counts.female = count;
+    });
+    return counts;
+  }
+
+  async getGGSEventsByGender(): Promise<{ male: GGSData[]; female: GGSData[] }> {
+    const data = await db
+      .select()
+      .from(ggsData)
+      .orderBy(ggsData.age);
+
+    return {
+      male: data.filter(d => d.sex === 1),
+      female: data.filter(d => d.sex === 2)
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();
