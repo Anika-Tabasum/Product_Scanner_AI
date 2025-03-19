@@ -20,11 +20,16 @@ function Router() {
       <MainNav />
       <main className="flex-1">
         <Switch>
-          <ProtectedRoute path="/" component={Home} />
-          <ProtectedRoute path="/plugin-demo" component={PluginDemo} />
-          <ProtectedRoute path="/profile" component={ProfilePage} />
+          {/* Routes that allow guest access */}
+          <ProtectedRoute path="/" component={Home} allowGuest={true} />
+          <ProtectedRoute path="/plugin-demo" component={PluginDemo} allowGuest={true} />
+          <ProtectedRoute path="/profile" component={ProfilePage} allowGuest={true} />
+          <ProtectedRoute path="/ggs-visualization" component={GGSVisualization} allowGuest={true} />
+          
+          {/* Routes that require full authentication */}
           <ProtectedRoute path="/admin" component={AdminDashboard} />
-          <ProtectedRoute path="/ggs-visualization" component={GGSVisualization} />
+          
+          {/* Public routes */}
           <Route path="/auth" component={AuthPage} />
           <Route path="/password-reset" component={PasswordResetPage} />
           <Route component={NotFound} />

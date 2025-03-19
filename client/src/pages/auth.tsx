@@ -21,16 +21,47 @@ import { SiGithub } from 'react-icons/si';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AuthPage() {
-  const [_, setLocation] = useLocation();
-  const { user, loginMutation, registerMutation } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { user, isGuest, loginMutation, registerMutation, guestLoginMutation } = useAuth();
   const { toast } = useToast();
+  
+  // Check for URL params
+  const searchParams = new URLSearchParams(location.split('?')[1]);
+  const isVerified = searchParams.get('verified') === 'true';
+  
+  // Check URL parameters
+  useEffect(() => {
+    // Show toast for successful verification
+    if (isVerified) {
+      toast({
+        title: "Email verified successfully!",
+        description: "Your account has been verified. You can now log in.",
+        variant: "default",
+      });
+    }
+    
+    // Show toast if redirected for unverified access attempt
+    const needsVerification = searchParams.get('needsVerification') === 'true';
+    if (needsVerification) {
+      toast({
+        title: "Email verification required",
+        description: "Please verify your email before accessing the application. Check your inbox for the verification link.",
+        variant: "destructive",
+      });
+    }
+  }, [isVerified, toast, searchParams]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (including guest users)
   useEffect(() => {
     if (user) {
       setLocation('/');
     }
   }, [user, setLocation]);
+  
+  // Handle guest login
+  const handleGuestLogin = () => {
+    guestLoginMutation.mutate();
+  };
 
   const loginForm = useForm({
     defaultValues: {
@@ -191,10 +222,19 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 space-y-2">
                 <Button variant="outline" className="w-full" onClick={() => window.location.href = '/api/auth/github'}>
                   <SiGithub className="mr-2 h-4 w-4" />
                   GitHub
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  className="w-full"
+                  onClick={handleGuestLogin}
+                  disabled={guestLoginMutation.isPending}
+                >
+                  {guestLoginMutation.isPending ? 'Loading...' : 'Continue as Guest'}
                 </Button>
               </div>
             </div>

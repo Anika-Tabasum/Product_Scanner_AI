@@ -32,12 +32,16 @@ export async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  if (!process.env.SESSION_SECRET) {
+  // Access SESSION_SECRET from environment variables
+  const sessionSecret = process.env.SESSION_SECRET;
+  console.log("SESSION_SECRET available:", !!sessionSecret); // Log if session secret is available
+
+  if (!sessionSecret) {
     throw new Error("SESSION_SECRET environment variable is required");
   }
 
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
@@ -59,6 +63,12 @@ export function setupAuth(app: Express) {
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false);
         }
+
+        // Check if user is verified
+        if (user.isVerified === false) {
+          return done(null, false, { message: "Please verify your email before logging in" });
+        }
+
         return done(null, user);
       } catch (error) {
         return done(error);
@@ -83,6 +93,7 @@ export function setupAuth(app: Express) {
               user = await storage.createUser({
                 username: profile.username || profile.id,
                 password,
+                email: profile.emails?.[0]?.value || `${profile.username || profile.id}@example.com`,
               });
             }
             return done(null, user);
@@ -104,77 +115,101 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Modify the registration endpoint to include email verification
+  // Update the registration endpoint to include better error handling
   app.post("/api/register", async (req, res, next) => {
     try {
       // Check if username or email already exists
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(400).json({
+          success: false,
+          message: "Username already exists"
+        });
       }
-      
+
       const existingEmail = await storage.getUserByEmail(req.body.email);
       if (existingEmail) {
-        return res.status(400).json({ message: "Email already exists" });
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists"
+        });
       }
 
       // Generate verification token
       const verificationToken = generateVerificationToken();
-      
+
       // Hash password
       const hashedPassword = await hashPassword(req.body.password);
-      
-      // Create user with verification token
+
+      // Create user
       const user = await storage.createUser({
         username: req.body.username,
         email: req.body.email,
         password: hashedPassword,
-        isVerified: "false",
-        verificationToken,
+        verificationToken
       });
 
       // Send verification email
       try {
-        const emailUrl = await sendVerificationEmail(req.body.email, verificationToken, req.body.username);
-        console.log("Verification email preview:", emailUrl);
+        const previewUrl = await sendVerificationEmail(
+          req.body.email,
+          verificationToken,
+          req.body.username
+        );
+        console.log("Verification email sent, preview:", previewUrl);
       } catch (emailError) {
         console.error("Failed to send verification email:", emailError);
-        // Continue anyway, we don't want to prevent registration if email fails
+        // Continue anyway but log the error
       }
 
-      // Return success without logging in
-      res.status(201).json({ 
-        message: "Registration successful! Please check your email to verify your account." 
+      // Return success response
+      res.status(201).json({
+        success: true,
+        message: "Registration successful! Please check your email to verify your account.",
+        emailSent: true
       });
     } catch (error) {
+      console.error("Registration error:", error);
       next(error);
     }
   });
-  
-  // Add email verification endpoint
+
+  // In the setupAuth function, update the verification endpoint
   app.get("/api/verify-email", async (req, res) => {
     try {
       const { token } = req.query;
-      
+
       if (!token || typeof token !== "string") {
-        return res.status(400).json({ message: "Invalid verification token" });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid verification token"
+        });
       }
-      
+
       // Find user with this verification token
       const user = await storage.getUserByVerificationToken(token);
-      
+
       if (!user) {
-        return res.status(404).json({ message: "Verification token not found or already used" });
+        return res.status(404).json({
+          success: false,
+          message: "Verification token not found or already used"
+        });
       }
-      
+
       // Mark user as verified
       await storage.verifyUser(user.id);
-      
-      // Redirect to login page or show success message
-      res.redirect("/auth?verified=true");
+
+      // Return success response
+      return res.json({
+        success: true,
+        message: "Email verification successful! You can now log in."
+      });
     } catch (error) {
       console.error("Email verification error:", error);
-      res.status(500).json({ message: "Error during email verification" });
+      return res.status(500).json({
+        success: false,
+        message: "Error during email verification"
+      });
     }
   });
 
@@ -203,11 +238,39 @@ export function setupAuth(app: Express) {
     });
   });
 
+  // Add guest access feature
+  app.post("/api/guest", (req, res) => {
+    // Create a guest session without requiring authentication
+    if (req.isAuthenticated()) {
+      return res.status(400).json({ message: "Already authenticated" });
+    }
+
+    // Set guest flag in session - no database record needed
+    req.session.isGuest = true;
+    req.session.guestCreatedAt = new Date().toISOString();
+
+    res.status(200).json({
+      guest: true,
+      message: "Guest access granted",
+      createdAt: req.session.guestCreatedAt
+    });
+  });
+
+  // Get current user or guest status
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (req.isAuthenticated()) {
+      // Return authenticated user data
+      return res.json(req.user);
+    } else if (req.session.isGuest) {
+      // Return guest status
+      return res.json({
+        guest: true,
+        createdAt: req.session.guestCreatedAt
+      });
+    } else {
+      // Not authenticated and not a guest
       return res.status(401).json({ message: "Not authenticated" });
     }
-    res.json(req.user);
   });
 
   // GitHub OAuth routes

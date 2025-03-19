@@ -1,186 +1,175 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ResponsiveContainer } from 'recharts';
-
-// Constants for data mapping
-const GENERATION_LABELS = {
-  1: "1930-39",
-  2: "1940-49",
-  3: "1950-59",
-  4: "1960-69",
-  5: "1970-79",
-  6: "1980-86"
-};
-
-const EDUCATION_LABELS = {
-  1: "High",
-  2: "Middle",
-  3: "Low"
-};
-
-interface GGSEvent {
-  id: number;
-  originalId: number;
-  sex: number;
-  generations: number;
-  eduLevel: number;
-  age: number;
-  eventData: Record<string, string>;
-}
-
-interface GGSData {
-  genderStats: {
-    male: number;
-    female: number;
-  };
-  eventsByGender: {
-    male: GGSEvent[];
-    female: GGSEvent[];
-  };
-}
-
-function processGenerationData(events: GGSEvent[]) {
-  const generationCounts = Array(6).fill(0);
-  events.forEach(event => {
-    if (event.generations >= 1 && event.generations <= 6) {
-      generationCounts[event.generations - 1]++;
-    }
-  });
-  return Object.entries(GENERATION_LABELS).map(([key, label]) => ({
-    name: label,
-    count: generationCounts[Number(key) - 1]
-  }));
-}
-
-function processEducationData(events: GGSEvent[]) {
-  const educationCounts = Array(3).fill(0);
-  events.forEach(event => {
-    if (event.eduLevel >= 1 && event.eduLevel <= 3) {
-      educationCounts[event.eduLevel - 1]++;
-    }
-  });
-  return Object.entries(EDUCATION_LABELS).map(([key, label]) => ({
-    name: label,
-    count: educationCounts[Number(key) - 1]
-  }));
-}
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import Papa from 'papaparse';
 
 export default function GGSVisualization() {
-  const { data, isLoading, refetch } = useQuery<GGSData>({
-    queryKey: ['/api/statuses']
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<{
+    gender: { name: string; value: number }[];
+    education: { name: string; male: number; female: number }[];
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const importData = async () => {
-    try {
-      await fetch('/api/ggs/import', { method: 'POST' });
-      refetch();
-    } catch (error) {
-      console.error('Failed to import data:', error);
-    }
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        console.log('Starting CSV data fetch...');
+
+        const response = await fetch('/GGS_new.csv');
+        console.log('Fetch response status:', response.status);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch CSV: ${response.statusText}`);
+        }
+
+        const csvText = await response.text();
+        console.log('CSV text length:', csvText.length);
+        console.log('First 100 characters:', csvText.substring(0, 100));
+
+        Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            console.log('Parse complete. Total rows:', results.data.length);
+            console.log('Sample row:', results.data[0]);
+
+            // Count gender distribution
+            const genderCounts = { male: 0, female: 0 };
+            const educationCounts = {
+              'High School': { male: 0, female: 0 },
+              'Bachelor': { male: 0, female: 0 },
+              'Graduate': { male: 0, female: 0 }
+            };
+
+            results.data.forEach((row: any) => {
+              const sex = parseInt(row.sex);
+              const eduLevel = parseInt(row.edu_level);
+
+              // Count gender
+              if (sex === 1) genderCounts.male++;
+              else if (sex === 2) genderCounts.female++;
+
+              // Count education levels by gender
+              if (eduLevel && (sex === 1 || sex === 2)) {
+                const gender = sex === 1 ? 'male' : 'female';
+                if (eduLevel === 1) educationCounts['High School'][gender]++;
+                else if (eduLevel === 2) educationCounts['Bachelor'][gender]++;
+                else if (eduLevel === 3) educationCounts['Graduate'][gender]++;
+              }
+            });
+
+            const processedData = {
+              gender: [
+                { name: 'Male', value: genderCounts.male },
+                { name: 'Female', value: genderCounts.female }
+              ],
+              education: Object.entries(educationCounts).map(([name, counts]) => ({
+                name,
+                male: counts.male,
+                female: counts.female
+              }))
+            };
+
+            console.log('Processed data:', processedData);
+            setData(processedData);
+            setIsLoading(false);
+          },
+          error: (error) => {
+            console.error('CSV parsing error:', error);
+            setError('Failed to parse CSV data');
+            setIsLoading(false);
+          }
+        });
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load data');
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container mx-auto p-4 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+        <p className="mt-2">Loading GGS data...</p>
       </div>
     );
   }
 
-  const { genderStats = { male: 0, female: 0 }, eventsByGender = { male: [], female: [] } } = data || {};
-
-  const maleGenerationData = processGenerationData(eventsByGender.male);
-  const femaleGenerationData = processGenerationData(eventsByGender.female);
-  const maleEducationData = processEducationData(eventsByGender.male);
-  const femaleEducationData = processEducationData(eventsByGender.female);
+  if (error || !data) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center text-red-500">
+          {error || 'No data available'}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">GGS Data Analysis</h1>
-        <Button onClick={importData}>Import GGS Data</Button>
-      </div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-8">GGS Data Analysis</h1>
 
-      <div className="grid gap-6">
-        {/* Gender Distribution Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Gender Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="p-4 rounded-lg bg-blue-100">
-                <h3 className="text-lg font-semibold text-blue-700">Men</h3>
-                <p className="text-2xl font-bold text-blue-900">{genderStats.male}</p>
+      {/* Gender Distribution */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Gender Distribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            {data.gender.map((item) => (
+              <div 
+                key={item.name}
+                className={`p-4 rounded-lg ${
+                  item.name === 'Male' ? 'bg-blue-100' : 'bg-pink-100'
+                }`}
+              >
+                <h3 className={`text-lg font-semibold ${
+                  item.name === 'Male' ? 'text-blue-700' : 'text-pink-700'
+                }`}>
+                  {item.name}
+                </h3>
+                <p className={`text-2xl font-bold ${
+                  item.name === 'Male' ? 'text-blue-900' : 'text-pink-900'
+                }`}>
+                  {item.value}
+                </p>
               </div>
-              <div className="p-4 rounded-lg bg-pink-100">
-                <h3 className="text-lg font-semibold text-pink-700">Women</h3>
-                <p className="text-2xl font-bold text-pink-900">{genderStats.female}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Generation Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Generation Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    data={maleGenerationData}
-                    type="monotone"
-                    dataKey="count"
-                    name="Men"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    data={femaleGenerationData}
-                    type="monotone"
-                    dataKey="count"
-                    name="Women"
-                    stroke="#ec4899"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Education Level Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Education Level Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart width={500} height={300} data={maleEducationData.concat(femaleEducationData)}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" name="Men" fill="#3b82f6" stackId="a" />
-                  <Bar dataKey="count" name="Women" fill="#ec4899" stackId="a" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Education Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Education Level Distribution by Gender</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px] w-full">
+            <BarChart
+              width={800}
+              height={400}
+              data={data.education}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="male" name="Male" fill="#3b82f6" />
+              <Bar dataKey="female" name="Female" fill="#ec4899" />
+            </BarChart>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

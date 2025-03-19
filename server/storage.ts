@@ -50,6 +50,7 @@ export interface IStorage {
   createGGSData(data: InsertGGSData): Promise<GGSData>;
   getGGSDataByGender(): Promise<{ male: number; female: number }>;
   getGGSEventsByGender(): Promise<{ male: GGSData[]; female: GGSData[] }>;
+  clearGGSData(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -140,14 +141,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(userData: InsertUser): Promise<User> {
+    // Create a properly typed user object with all required fields
+    const userDataWithDefaults = {
+      ...userData,
+      role: "user",
+      deleted: false,
+      // isVerified is handled by the database default (false)
+    };
+
     const [user] = await db
       .insert(users)
-      .values({
-        ...userData,
-        isVerified: "false",
-        role: "user",
-        deleted: false
-      })
+      .values(userDataWithDefaults)
       .returning();
     return user;
   }
@@ -155,9 +159,9 @@ export class DatabaseStorage implements IStorage {
   async verifyUser(userId: number): Promise<void> {
     await db
       .update(users)
-      .set({ 
-        isVerified: "true", 
-        verificationToken: null 
+      .set({
+        isVerified: true,
+        verificationToken: null
       })
       .where(eq(users.id, userId));
   }
@@ -212,7 +216,7 @@ export class DatabaseStorage implements IStorage {
 
   async resetPassword(userId: number, hashedPassword: string): Promise<void> {
     await db.update(users)
-      .set({ 
+      .set({
         password: hashedPassword,
         resetToken: null
       })
@@ -241,8 +245,8 @@ export class DatabaseStorage implements IStorage {
       role: users.role,
       count: count()
     })
-    .from(users)
-    .groupBy(users.role);
+      .from(users)
+      .groupBy(users.role);
 
     return result.reduce((acc, { role, count }) => {
       acc[role] = count;
@@ -255,8 +259,8 @@ export class DatabaseStorage implements IStorage {
       category: products.category,
       count: count()
     })
-    .from(products)
-    .groupBy(products.category);
+      .from(products)
+      .groupBy(products.category);
 
     return result.reduce((acc, { category, count }) => {
       if (category) {
@@ -325,6 +329,9 @@ export class DatabaseStorage implements IStorage {
       male: data.filter(d => d.sex === 1),
       female: data.filter(d => d.sex === 2)
     };
+  }
+  async clearGGSData(): Promise<void> {
+    await db.delete(ggsData);
   }
 }
 

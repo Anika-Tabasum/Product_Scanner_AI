@@ -310,7 +310,7 @@ function UserProfile({ user }: { user: any }) {
 }
 
 export default function ProfilePage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isGuest } = useAuth();
 
   if (isLoading) {
     return (
@@ -320,7 +320,8 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
+  // Handle guest users
+  if (isGuest) {
     return (
       <div className="container py-8">
         <GuestView />
@@ -328,6 +329,21 @@ export default function ProfilePage() {
     );
   }
 
+  // If not a guest but no user data, show login message
+  if (!user) {
+    return (
+      <div className="container py-8 text-center">
+        <AlertTriangle className="h-12 w-12 mx-auto text-yellow-500 mb-4" />
+        <h2 className="text-2xl font-bold mb-4">Not Logged In</h2>
+        <p className="mb-4">Please log in to view your profile</p>
+        <Button onClick={() => window.location.href = '/auth'}>
+          Log In
+        </Button>
+      </div>
+    );
+  }
+
+  // Regular authenticated user profile
   return (
     <div className="container py-8">
       <UserProfile user={user} />
