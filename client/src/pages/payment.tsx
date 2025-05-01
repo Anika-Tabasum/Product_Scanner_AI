@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useToast } from "@/components/ui/use-toast";
+import { useCredits } from "@/hooks/use-credits";
 import { CreditCard, Smartphone } from "lucide-react";
 
 interface PaymentMethod {
@@ -49,8 +50,10 @@ const paymentMethods: PaymentMethod[] = [
 export default function PaymentPage() {
   const [selectedMethod, setSelectedMethod] = useState<string>("bkash");
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { refetchCredits } = useCredits();
 
   // Get package details from URL params
   const params = new URLSearchParams(window.location.search);
@@ -64,10 +67,15 @@ export default function PaymentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsProcessing(true);
 
     try {
-      // In a real app, you would make an API call to process the payment
-      // For this demo, we'll simulate a successful payment
+      // Show processing message
+      toast({
+        title: "Processing Payment",
+        description: "Please wait while we process your payment...",
+      });
+
       const response = await fetch("/api/purchase-credits", {
         method: "POST",
         headers: {
@@ -83,6 +91,9 @@ export default function PaymentPage() {
       if (!response.ok) {
         throw new Error("Payment failed");
       }
+
+      // Refetch credits to update the balance
+      await refetchCredits();
 
       toast({
         title: "Payment Successful",
@@ -172,8 +183,8 @@ export default function PaymentPage() {
                   <span className="text-muted-foreground">Credits:</span>
                   <span className="font-medium">{credits} credits</span>
                 </div>
-                <Button type="submit" className="w-full">
-                  Pay ৳{amount}
+                <Button type="submit" className="w-full" disabled={isProcessing}>
+                  {isProcessing ? "Processing..." : `Pay ৳${amount}`}
                 </Button>
               </div>
             </form>

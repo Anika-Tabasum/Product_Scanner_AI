@@ -7,6 +7,7 @@ import { insertProductSchema, insertGGSDataSchema } from "@shared/schema";
 import { registerProfileRoutes } from "./routes/profile";
 import { registerAdminRoutes } from "./routes/admin";
 import { registerResetPasswordRoutes } from "./routes/reset-password";
+import { registerPaymentRoutes } from "./routes/payment";
 import path from "path";
 import fs from "fs";
 import { parse, CsvError } from "csv-parse";
@@ -26,6 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerProfileRoutes(app);
   registerAdminRoutes(app);
   registerResetPasswordRoutes(app);
+  registerPaymentRoutes(app);
   setupPayment(app);
 
   app.post("/api/products/identify", requireCredits(CREDIT_COSTS.IDENTIFY_PRODUCT), async (req, res) => {
