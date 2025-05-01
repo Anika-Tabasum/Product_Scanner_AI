@@ -48,9 +48,11 @@ export function MainNav() {
         <div className="ml-auto flex items-center space-x-4">
           {user && (
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="flex items-center space-x-2">
-                <Coins className="h-4 w-4" />
-                <span>{credits} Credits</span>
+              <Button asChild variant="ghost" className="flex items-center space-x-2">
+                <Link href="/credits">
+                  <Coins className="h-4 w-4" />
+                  <span>{credits} Credits</span>
+                </Link>
               </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
