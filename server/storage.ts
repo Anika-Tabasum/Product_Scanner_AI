@@ -15,10 +15,8 @@ export interface IStorage {
   getCreditPackages(): Promise<CreditPackage[]>;
   getPaymentMethods(): Promise<PaymentMethod[]>;
   createPayment(payment: Omit<Payment, "id" | "createdAt">): Promise<Payment>;
-  updatePaymentStatus(paymentId: number, status: string, verifiedBy?: number): Promise<void>;
+  updatePaymentStatus(paymentId: string | number, status: string, verifiedBy?: number): Promise<void>;
   getPayment(paymentId: number): Promise<Payment | undefined>;
-  createPayment(payment: Omit<Payment, "id" | "createdAt">): Promise<Payment>;
-  updatePaymentStatus(paymentId: string, status: string): Promise<void>;
   recordCreditUsage(usage: Omit<CreditUsage, "id" | "createdAt">): Promise<void>;
   getCreditUsageHistory(userId: number): Promise<CreditUsage[]>;
   transaction<T>(callback: (tx: any) => Promise<T>): Promise<T>;
@@ -87,21 +85,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserCredits(userId: number, amount: number): Promise<void> {
-    const [existing] = await db
-      .select()
-      .from(userCredits)
-      .where(eq(userCredits.userId, userId));
-
-    if (existing) {
-      await db
-        .update(userCredits)
-        .set({ balance: existing.balance + amount })
+    return await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(userCredits)
         .where(eq(userCredits.userId, userId));
-    } else {
-      await db
-        .insert(userCredits)
-        .values({ userId, balance: amount });
-    }
+
+      if (existing) {
+        await tx
+          .update(userCredits)
+          .set({ balance: existing.balance + amount })
+          .where(eq(userCredits.userId, userId));
+      } else {
+        await tx
+          .insert(userCredits)
+          .values({
+            userId,
+            balance: amount,
+          });
+      }
+
+      // Record credit addition in history
+      await tx.insert(creditUsage).values({
+        userId,
+        amount, // Positive for additions
+        type: "purchase",
+        metadata: {},
+      });
+    });
+  }
+
+  async transaction<T>(callback: (tx: any) => Promise<T>): Promise<T> {
+    return await db.transaction(callback);
   }
 
   async getCreditPackages(): Promise<CreditPackage[]> {
@@ -154,10 +169,6 @@ export class DatabaseStorage implements IStorage {
 
   async recordCreditUsage(usage: Omit<CreditUsage, "id" | "createdAt">): Promise<void> {
     await db.insert(creditUsage).values(usage);
-  }
-
-  async transaction<T>(callback: (tx: any) => Promise<T>): Promise<T> {
-    return await db.transaction(callback);
   }
 
   sessionStore: session.Store;

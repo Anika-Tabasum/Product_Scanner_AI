@@ -22,10 +22,10 @@ export async function deductCredits(userId: number, amount: number, type: string
       .set({ balance: userCredit.balance - amount })
       .where(eq(userCredits.userId, userId));
 
-    // Record credit usage
+    // Record credit usage (negative amount for deductions)
     await tx.insert(creditUsage).values({
       userId,
-      amount,
+      amount: -amount, // Make it negative since it's a deduction
       type,
       metadata,
     });
