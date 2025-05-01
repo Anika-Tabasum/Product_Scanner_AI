@@ -24,8 +24,9 @@ export default function Home() {
   const [processing, setProcessing] = useState(false);
   const [temporaryProduct, setTemporaryProduct] = useState<ExtendedProduct | null>(null);
 
-  const { data: products } = useQuery<Product[]>({
-    queryKey: ['/api/products']
+  const { data: products, refetch: refetchProducts } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   const identifyMutation = useMutation({
@@ -48,6 +49,8 @@ export default function Home() {
           title: 'Success',
           description: 'Product successfully identified and added to database',
         });
+        // Immediately refresh the products list
+        refetchProducts();
       }
       setProcessing(false);
     },
