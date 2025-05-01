@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useCredits() {
-  const { data: credits, refetch } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: credits, refetch: refetchCredits } = useQuery({
     queryKey: ["credits"],
     queryFn: async () => {
       const response = await fetch("/api/credits");
@@ -15,8 +17,27 @@ export function useCredits() {
     refetchInterval: 60000,
   });
 
+  const { data: history, refetch: refetchHistory } = useQuery({
+    queryKey: ["/api/credits/history"],
+    queryFn: async () => {
+      const response = await fetch("/api/credits/history");
+      if (!response.ok) {
+        throw new Error("Failed to fetch credit history");
+      }
+      return response.json();
+    },
+  });
+
+  const refetchAll = async () => {
+    await Promise.all([
+      refetchCredits(),
+      refetchHistory()
+    ]);
+  };
+
   return {
     credits: credits ?? 0,
-    refetchCredits: refetch,
+    history: history ?? [],
+    refetchCredits: refetchAll,
   };
 }

@@ -17,6 +17,7 @@ import MarksPage from "@/pages/marks";
 import VerifyPage from "@/pages/verify";
 import NotFound from "@/pages/not-found";
 import CreditsPage from "@/pages/credits";
+import PaymentPage from "@/pages/payment";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
           <ProtectedRoute path="/admin" component={AdminDashboard} />
           <ProtectedRoute path="/all-link" component={AllLinkPage} />
           <ProtectedRoute path="/credits" component={CreditsPage} />
+          <ProtectedRoute path="/payment" component={PaymentPage} />
           
           {/* Public routes */}
           <Route path="/marks" component={MarksPage} />

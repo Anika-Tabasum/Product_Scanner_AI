@@ -8,19 +8,8 @@ import { format } from "date-fns";
 import { Link } from "wouter";
 
 export default function CreditsPage() {
-  const { credits } = useCredits();
+  const { credits, history } = useCredits();
   const { user } = useAuth();
-
-  const { data: history } = useQuery({
-    queryKey: ["/api/credits/history"],
-    queryFn: async () => {
-      const response = await fetch("/api/credits/history");
-      if (!response.ok) {
-        throw new Error("Failed to fetch credit history");
-      }
-      return response.json();
-    },
-  });
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -53,15 +42,27 @@ export default function CreditsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Button className="h-auto py-4 flex flex-col gap-2" variant="outline">
+                <Button
+                  className="h-auto py-4 flex flex-col gap-2"
+                  variant="outline"
+                  onClick={() => window.location.href = `/payment?packageId=1&amount=4.99&credits=50`}
+                >
                   <div className="text-2xl font-bold">50 Credits</div>
                   <div className="text-muted-foreground">$4.99</div>
                 </Button>
-                <Button className="h-auto py-4 flex flex-col gap-2" variant="outline">
+                <Button
+                  className="h-auto py-4 flex flex-col gap-2"
+                  variant="outline"
+                  onClick={() => window.location.href = `/payment?packageId=2&amount=8.99&credits=100`}
+                >
                   <div className="text-2xl font-bold">100 Credits</div>
                   <div className="text-muted-foreground">$8.99</div>
                 </Button>
-                <Button className="h-auto py-4 flex flex-col gap-2" variant="outline">
+                <Button
+                  className="h-auto py-4 flex flex-col gap-2"
+                  variant="outline"
+                  onClick={() => window.location.href = `/payment?packageId=3&amount=15.99&credits=200`}
+                >
                   <div className="text-2xl font-bold">200 Credits</div>
                   <div className="text-muted-foreground">$15.99</div>
                 </Button>
