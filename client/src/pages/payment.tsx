@@ -166,14 +166,14 @@ export default function PaymentPage() {
               <div className="pt-4 space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Amount:</span>
-                  <span className="font-medium">${amount}</span>
+                  <span className="font-medium">৳{amount}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Credits:</span>
                   <span className="font-medium">{credits} credits</span>
                 </div>
                 <Button type="submit" className="w-full">
-                  Pay ${amount}
+                  Pay ৳{amount}
                 </Button>
               </div>
             </form>

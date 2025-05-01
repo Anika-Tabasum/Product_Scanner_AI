@@ -45,26 +45,26 @@ export default function CreditsPage() {
                 <Button
                   className="h-auto py-4 flex flex-col gap-2"
                   variant="outline"
-                  onClick={() => window.location.href = `/payment?packageId=1&amount=4.99&credits=50`}
+                  onClick={() => window.location.href = `/payment?packageId=1&amount=50&credits=500`}
                 >
-                  <div className="text-2xl font-bold">50 Credits</div>
-                  <div className="text-muted-foreground">$4.99</div>
+                  <div className="text-2xl font-bold">500 Credits</div>
+                  <div className="text-muted-foreground">৳50</div>
                 </Button>
                 <Button
                   className="h-auto py-4 flex flex-col gap-2"
                   variant="outline"
-                  onClick={() => window.location.href = `/payment?packageId=2&amount=8.99&credits=100`}
+                  onClick={() => window.location.href = `/payment?packageId=2&amount=100&credits=1200`}
                 >
-                  <div className="text-2xl font-bold">100 Credits</div>
-                  <div className="text-muted-foreground">$8.99</div>
+                  <div className="text-2xl font-bold">1200 Credits</div>
+                  <div className="text-muted-foreground">৳100</div>
                 </Button>
                 <Button
                   className="h-auto py-4 flex flex-col gap-2"
                   variant="outline"
-                  onClick={() => window.location.href = `/payment?packageId=3&amount=15.99&credits=200`}
+                  onClick={() => window.location.href = `/payment?packageId=3&amount=200&credits=3000`}
                 >
-                  <div className="text-2xl font-bold">200 Credits</div>
-                  <div className="text-muted-foreground">$15.99</div>
+                  <div className="text-2xl font-bold">3000 Credits</div>
+                  <div className="text-muted-foreground">৳200</div>
                 </Button>
               </div>
             </CardContent>
