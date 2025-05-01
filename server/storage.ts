@@ -20,6 +20,7 @@ export interface IStorage {
   createPayment(payment: Omit<Payment, "id" | "createdAt">): Promise<Payment>;
   updatePaymentStatus(paymentId: string, status: string): Promise<void>;
   recordCreditUsage(usage: Omit<CreditUsage, "id" | "createdAt">): Promise<void>;
+  getCreditUsageHistory(userId: number): Promise<CreditUsage[]>;
   transaction<T>(callback: (tx: any) => Promise<T>): Promise<T>;
 
   createProduct(product: InsertProduct, userId: number): Promise<Product>;
@@ -69,6 +70,14 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async getCreditUsageHistory(userId: number): Promise<CreditUsage[]> {
+    return await db
+      .select()
+      .from(creditUsage)
+      .where(eq(creditUsage.userId, userId))
+      .orderBy(desc(creditUsage.createdAt));
+  }
+
   async getUserCredits(userId: number): Promise<UserCredits | undefined> {
     const [credits] = await db
       .select()

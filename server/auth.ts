@@ -400,6 +400,21 @@ export function setupAuth(app: Express) {
   });
 
   // Get current user or guest status
+  // Credit usage history endpoint
+  app.get("/api/credits/history", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const history = await storage.getCreditUsageHistory(req.user.id);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching credit history:", error);
+      res.status(500).json({ message: "Error fetching credit history" });
+    }
+  });
+
   app.get("/api/user", (req: Request, res: Response) => {
     if (req.isAuthenticated()) {
       // Return authenticated user data
