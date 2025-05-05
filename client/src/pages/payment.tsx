@@ -9,43 +9,92 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCredits } from "@/hooks/use-credits";
 import { CreditCard, Smartphone } from "lucide-react";
 
+interface PaymentField {
+  name: string;
+  label: string;
+  type: string;
+  placeholder?: string;
+}
+
 interface PaymentMethod {
   id: string;
   name: string;
-  icon: JSX.Element;
-  fields: { name: string; label: string; type: string }[];
+  icon: React.ReactNode;
+  fields: PaymentField[];
 }
 
 const paymentMethods: PaymentMethod[] = [
   {
     id: "bkash",
     name: "bKash",
-    icon: <Smartphone className="h-6 w-6 text-pink-600" />,
+    icon: <Smartphone className="h-4 w-4" />,
     fields: [
-      { name: "phone", label: "bKash Number", type: "tel" },
-      { name: "pin", label: "PIN", type: "password" },
+      {
+        name: "senderNumber",
+        label: "Sender Number",
+        type: "text",
+        placeholder: "01XXXXXXXXX",
+      },
+      {
+        name: "transactionId",
+        label: "Transaction ID",
+        type: "text",
+        placeholder: "Enter bKash Transaction ID",
+      },
     ],
   },
   {
     id: "nagad",
     name: "Nagad",
-    icon: <Smartphone className="h-6 w-6 text-orange-600" />,
+    icon: <Smartphone className="h-4 w-4" />,
     fields: [
-      { name: "phone", label: "Nagad Number", type: "tel" },
-      { name: "pin", label: "PIN", type: "password" },
+      {
+        name: "senderNumber",
+        label: "Sender Number",
+        type: "text",
+        placeholder: "01XXXXXXXXX",
+      },
+      {
+        name: "transactionId",
+        label: "Transaction ID",
+        type: "text",
+        placeholder: "Enter Nagad Transaction ID",
+      },
     ],
   },
   {
     id: "card",
     name: "Credit Card",
-    icon: <CreditCard className="h-6 w-6 text-blue-600" />,
+    icon: <CreditCard className="h-4 w-4" />,
     fields: [
-      { name: "cardNumber", label: "Card Number", type: "text" },
-      { name: "expiry", label: "Expiry Date (MM/YY)", type: "text" },
-      { name: "cvv", label: "CVV", type: "text" },
+      {
+        name: "cardNumber",
+        label: "Card Number",
+        type: "text",
+        placeholder: "XXXX XXXX XXXX XXXX",
+      },
+      {
+        name: "expiryDate",
+        label: "Expiry Date",
+        type: "text",
+        placeholder: "MM/YY",
+      },
+      {
+        name: "cvv",
+        label: "CVV",
+        type: "text",
+        placeholder: "XXX",
+      },
     ],
   },
 ];
+
+// Instructions for each payment method
+const paymentInstructions: Record<string, string> = {
+  bkash: "Send money to our bKash number (01XXXXXXXXX) and provide the Transaction ID",
+  nagad: "Send money to our Nagad number (01XXXXXXXXX) and provide the Transaction ID",
+  card: "Pay securely with your credit or debit card",
+};
 
 export default function PaymentPage() {
   const [selectedMethod, setSelectedMethod] = useState<string>("bkash");
@@ -127,6 +176,9 @@ export default function PaymentPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <Label>Select Payment Method</Label>
+                <div className="text-sm text-muted-foreground mb-4">
+                  {paymentInstructions[selectedMethod]}
+                </div>
                 <RadioGroup
                   value={selectedMethod}
                   onValueChange={setSelectedMethod}

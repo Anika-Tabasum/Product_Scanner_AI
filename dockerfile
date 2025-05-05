@@ -1,23 +1,20 @@
-# Use a Node.js base image
-FROM node:18-alpine
-
-# Set the working directory
+# --- Build Stage ---
+FROM node:18-alpine AS builder
 WORKDIR /app
-
-# Copy package.json and yarn.lock first to install dependencies
 COPY package.json yarn.lock ./
-
-# Install dependencies
-RUN yarn install
-
-# Copy the rest of the application files
+RUN yarn install --frozen-lockfile
 COPY . .
+RUN yarn build
 
-# Run database migration
+# --- Production Stage ---
+FROM node:18-alpine AS production
+WORKDIR /app
+COPY --from=builder /app /app
+RUN yarn install --production --frozen-lockfile && yarn cache clean
 RUN npm run db:push
 
-# Expose the port Vite runs on
-EXPOSE 5000
+# Railway sets the PORT env variable
+ENV NODE_ENV=production
+EXPOSE 8080
 
-# Start the Vite development server
-CMD ["yarn", "run", "dev", "--host"]
+CMD ["yarn", "start"]

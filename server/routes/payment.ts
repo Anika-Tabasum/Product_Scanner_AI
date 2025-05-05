@@ -1,5 +1,8 @@
 import { Express, Request, Response } from "express";
 import { storage } from "../storage";
+import { db } from "../db";
+import { eq } from "drizzle-orm";
+import { paymentMethods } from "@shared/payment-schema";
 
 export function registerPaymentRoutes(app: Express) {
   app.post("/api/purchase-credits", async (req: Request, res: Response) => {
@@ -12,22 +15,33 @@ export function registerPaymentRoutes(app: Express) {
     try {
       // Get package details
       const packages = await storage.getCreditPackages();
-      const pkg = packages.find(p => p.id === packageId);
+      const pkg = packages.find(p => p.id === parseInt(packageId));
 
       if (!pkg) {
         return res.status(404).json({ error: "Credit package not found" });
       }
 
-      // In a real app, we would process the payment here
-      // For now, we'll simulate a successful payment
-      
+      // Get payment method
+      const [method] = await db
+        .select()
+        .from(paymentMethods)
+        .where(eq(paymentMethods.name, paymentMethodId));
+
+      if (!method) {
+        return res.status(404).json({ error: "Payment method not found" });
+      }
+
+      if (!method.active) {
+        return res.status(400).json({ error: "Payment method is not available" });
+      }
+
       // Create a payment record
       const payment = await storage.createPayment({
         userId: req.user.id,
-        packageId: parseInt(packageId),
+        packageId: pkg.id,
         amount: pkg.price,
         status: "completed",
-        paymentMethodId: parseInt(paymentMethodId),
+        paymentMethodId: method.id,
         metadata: paymentDetails,
         transactionId: null,
         senderNumber: null,
