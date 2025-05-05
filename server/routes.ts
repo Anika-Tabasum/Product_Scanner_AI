@@ -19,6 +19,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
   });
+
+  // Project and team information endpoint
+  app.get("/info", (_req, res) => {
+    const teamMembers = [
+      {
+        name: "Md Shahadat Hossain Shahal",
+        id: "2220914",
+        github_id: "shahal-dev",
+        github_profile: "https://github.com/shahal-dev",
+        personal_notion_page: "https://www.notion.so/LLM-Based-Product-Scanner-1ead07997c7180c2954ceb6ca1cb6bf5",
+        personal_group_page_notion: "https://www.notion.so/Group-IV-1980c4a3a7b380d4ab32f8b5de211c52"
+      },
+      {
+        name: "Anika Tabasum",
+        id: "2220988",
+        github_id: "Anika-Tabasum",
+        github_profile: "https://github.com/Anika-Tabasum",
+        personal_notion_page: "https://www.notion.so/LLM-Based-Product-Scanner-1ead07997c7180c2954ceb6ca1cb6bf5",
+        personal_group_page_notion: "https://www.notion.so/Group-IV-1980c4a3a7b380d4ab32f8b5de211c52"
+      },
+      {
+        name: "Tasdir Ahmmed",
+        id: "2222325",
+        github_id: "tasdir",
+        github_profile: "https://github.com/tasdir",
+        personal_notion_page: "https://www.notion.so/LLM-Based-Product-Scanner-1ead07997c7180c2954ceb6ca1cb6bf5",
+        personal_group_page_notion: "https://www.notion.so/Group-IV-1980c4a3a7b380d4ab32f8b5de211c52"
+      },
+      {
+        name: "Md Rasel Bhuyan",
+        id: "2222230",
+        github_id: "Mdrasel1230",
+        github_profile: "https://github.com/Mdrasel1230",
+        personal_notion_page: "https://www.notion.so/LLM-Based-Product-Scanner-1ead07997c7180c2954ceb6ca1cb6bf5",
+        personal_group_page_notion: "https://www.notion.so/Group-IV-1980c4a3a7b380d4ab32f8b5de211c52"
+      }
+    ];
+
+    const projectInfo = {
+      project_name: "Product Scanner AI",
+      project_github_link: "https://github.com/Anika-Tabasum/Product_Scanner_AI",
+      team_members: teamMembers
+    };
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Info</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>${projectInfo.project_name}</h1>
+  <p><a href="${projectInfo.project_github_link}" target="_blank">Project GitHub</a></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th><th>ID</th><th>GitHub ID</th><th>GitHub Profile</th><th>Personal Notion Page</th><th>Group Notion Page</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${teamMembers.map(member => `
+      <tr>
+        <td>${member.name}</td>
+        <td>${member.id}</td>
+        <td>${member.github_id}</td>
+        <td><a href="${member.github_profile}" target="_blank">${member.github_profile}</a></td>
+        <td><a href="${member.personal_notion_page}" target="_blank">Personal Notion</a></td>
+        <td><a href="${member.personal_group_page_notion}" target="_blank">Group Notion</a></td>
+      </tr>
+      `).join('')}
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+    res.header("Content-Type", "text/html; charset=utf-8").send(html);
+  });
   
   // Serve uploaded files
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
