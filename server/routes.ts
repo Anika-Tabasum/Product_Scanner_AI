@@ -67,36 +67,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Project Info</title>
-  <style>
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background-color: #f2f2f2; }
-  </style>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-  <h1>${projectInfo.project_name}</h1>
-  <p><a href="${projectInfo.project_github_link}" target="_blank">Project GitHub</a></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th><th>ID</th><th>GitHub ID</th><th>GitHub Profile</th><th>Personal Notion Page</th><th>Group Notion Page</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${teamMembers.map(member => `
-      <tr>
-        <td>${member.name}</td>
-        <td>${member.id}</td>
-        <td>${member.github_id}</td>
-        <td><a href="${member.github_profile}" target="_blank">${member.github_profile}</a></td>
-        <td><a href="${member.personal_notion_page}" target="_blank">Personal Notion</a></td>
-        <td><a href="${member.personal_group_page_notion}" target="_blank">Group Notion</a></td>
-      </tr>
-      `).join('')}
-    </tbody>
-  </table>
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <h1>${projectInfo.project_name}</h1>
+      <a href="${projectInfo.project_github_link}" class="btn btn-primary" target="_blank">View Project on GitHub</a>
+    </div>
+    <div class="card">
+      <div class="card-header">Team Members</div>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Name</th>
+              <th>ID</th>
+              <th>GitHub ID</th>
+              <th>GitHub Profile</th>
+              <th>Personal Notion</th>
+              <th>Group Notion</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${teamMembers.map(member => `
+              <tr>
+                <td>${member.name}</td>
+                <td>${member.id}</td>
+                <td>${member.github_id}</td>
+                <td><a href="${member.github_profile}" target="_blank">${member.github_id}</a></td>
+                <td><a href="${member.personal_notion_page}" target="_blank">Personal Notion</a></td>
+                <td><a href="${member.personal_group_page_notion}" target="_blank">Group Notion</a></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </body>
 </html>`;
 
@@ -105,6 +115,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Serve uploaded files
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+  // Evaluation criteria marks endpoint
+  app.get("/marks", (_req, res) => {
+    const data = [
+      { feature_name: "OCR & AI-Powered Identification", mark: 10, justification: "Image upload is fully functional, integrated with a preprocessing OCR module that extracts text, which is then passed to OpenAI's API for accurate, contextual product identification. This includes fallback handling, edge-case tolerance, and real-time feedback on predictions.", internal_route: "/api/products/identify" },
+      { feature_name: "Credits System", mark: 10, justification: "Every AI operation deducts credits from users. Admin dashboard allows credit top-ups and real-time usage monitoring. The implementation includes backend enforcement, real-time UI updates, and future readiness for monetization tiers.", internal_route: "/api/credits, /api/credits/history" },
+      { feature_name: "Payment System", mark: 10, justification: "Custom payment flow implementation with transaction history tracking. Users can initiate payments, submit verification, and view transaction history. System includes admin verification workflow and automatic credit balance updates.", internal_route: "/api/payment-methods, /api/verify-payment/:id" }
+    ];
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evaluation Marks</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+    h1 { margin-bottom: 30px; text-align: center; color: #333; }
+    .table-container { max-width: 1200px; margin: 0 auto; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { background-color: #0d6efd; color: white; font-weight: bold; text-align: left; }
+    th, td { padding: 12px 15px; border: 1px solid #ddd; }
+    tr:nth-child(even) { background-color: #f8f9fa; }
+    tr:hover { background-color: #e9ecef; }
+    .mark-cell { font-weight: bold; font-size: 1.2em; text-align: center; }
+    .feature-cell { font-weight: bold; color: #0d6efd; }
+    .checkmark { color: #198754; font-size: 1.5em; margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Evaluation Table for /marks Route</h1>
+    <div id="marks-table" class="table-container"></div>
+  </div>
+  <script>
+    // Data for the table
+    const data = ${JSON.stringify(data)};
+    
+    // Column headers
+    const columns = ["Feature Name", "Mark", "Justification for This Marking", "Internal Route"];
+    
+    // Create table using D3.js
+    const table = d3.select("#marks-table")
+      .append("table")
+      .attr("class", "table table-bordered");
+      
+    // Create table header
+    const thead = table.append("thead");
+    thead.append("tr")
+      .selectAll("th")
+      .data(columns)
+      .enter()
+      .append("th")
+      .text(d => d);
+      
+    // Create table body
+    const tbody = table.append("tbody");
+    
+    // Create rows
+    const rows = tbody.selectAll("tr")
+      .data(data)
+      .enter()
+      .append("tr");
+      
+    // Add feature name cells
+    rows.append("td")
+      .attr("class", "feature-cell")
+      .text(d => d.feature_name);
+      
+    // Add mark cells with special styling
+    rows.append("td")
+      .attr("class", "mark-cell")
+      .text(d => d.mark);
+      
+    // Add justification cells
+    rows.append("td")
+      .text(d => d.justification);
+      
+    // Add route cells
+    rows.append("td")
+      .text(d => d.internal_route);
+  </script>
+</body>
+</html>`;
+    res.header("Content-Type", "text/html; charset=utf-8").send(html);
+  });
 
   // Register other route modules
   registerProfileRoutes(app);
